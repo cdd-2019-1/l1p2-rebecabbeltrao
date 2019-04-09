@@ -1,0 +1,155 @@
+---
+title: "Lab01.2"
+output:
+    html_document:
+    df_print: paged
+theme: sandstone
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library("RColorBrewer")
+source(here::here("code/lib.R"))
+theme_set(theme_bw())
+```
+
+```{r read}
+atividade = read_projectdata()
+glimpse(atividade)
+
+```
+
+
+#Quais partidos possuem mais seguidores de acordo com seus políticos associados?
+Como podemos observar, os 10 partidos que possuem mais seguidores são: PODE, PSL, PSOL, PT, PSDB, DEM, PSD, MDB,PDT, MDB.
+```{r}
+atividade %>% 
+  na.omit(.) %>% 
+  group_by(partido) %>% summarise(
+  soma = sum(seguidores)) %>%
+  ggplot(aes(x=reorder(partido, 
+                       soma), 
+             y=soma,
+             color= partido))+
+  geom_point()+
+  geom_segment(aes(x= partido,
+                   xend= partido, 
+                   y=0,
+                   yend= soma))+
+  labs(x="Partido",
+       y ="Quantidade de seguidores por partido") + 
+  theme(axis.text.x = element_text(angle = 90,
+                                   hjust = 1))+ 
+  coord_flip()
+
+```
+
+
+#Os políticos mais seguidos no twitter influenciam na quantidade de seguidores por partidos?
+
+ Os 5 politicos com maior numero de seguidores (Romário, José Serra, Flávio Bolsonaro, Marcelo Freixo e Jean Wyllys) fazem parte dos partidos: PODE, PSDB, PSL e PSOL, apontados como 4 dos 5 partidos mais seguidos de acordo com seus aliados. Segundo o gráfico, observamos que os subsequentes mais seguidos são filiados aos partidos do PT, DEM e PSD, que também estão listados como os parte dos 10 maiores no ranking. 
+No entanto, a ordem que se encontram os partidos mais seguidos não corresponde exatamente à ordem apresentada pelos políticos, como exemplificado por José Serra, que ocupa a segunda posição e é filiado ao PSDB, mas o partido ocupa a quarta posição no ranking do gráfico anterior. Podemos dizer que a quantidade de seguidores dos deputados e senadores influencia diretamente na quantidade de seguidores dos partidos, mas os mais seguidos não determinam com exatidão que o seu partido estará na mesma posição.
+
+```{r}
+atividade %>% 
+  na.omit(.) %>% 
+  arrange(-seguidores) %>% 
+  slice(1:20) %>% 
+  ggplot(aes(x = reorder(nome_eleitoral,
+                         as.double(seguidores)),
+             y= as.factor(seguidores),
+             fill= partido))+ 
+  geom_col() +
+  labs(x = "Twitter",
+       y="Seguidores")+ 
+  theme(axis.text.x = element_text(angle = 90, 
+                                   hjust = 1)) + 
+  coord_flip()
+```
+
+
+
+#Os politicos que mais tuitam são os que possuem um maior engajamento próprio? Isso interefe de alguma forma no total de engajamento?
+
+Como demonstrado na visualização, os 5 políticos que mais tuitam são: Bacelar, Margarida Salomão, Marcelo Freixo, Alvaro Dias e Humberto Costa. Já os políticos que tem um maior engajamento proprio são: Carla zambelli, Joice Hasselmann, Marcelo Freixo, Talíria Petrone e David Miranda. Podemos perceber que a quantidade de tweets não interfere quando determinamos um nivel de engajamento proprio, visto que apenas Marcelo Freixo tuita bastante e tem um alto engajamento próprio. 
+
+```{r}
+atividade %>% 
+  na.omit(.) %>%
+  group_by(nome_eleitoral) %>% 
+  summarise(soma = sum(n_proprio)) %>% 
+  arrange(-soma) %>% 
+  slice(1:20) %>%
+  ggplot(aes(x = reorder(nome_eleitoral,
+                         as.double(soma)),
+             y =soma)) + 
+  geom_point(size=3.3,
+             color = "yellow2",
+             alpha= 0.9)+ 
+  geom_segment(aes(x= nome_eleitoral,
+                   xend= nome_eleitoral, 
+                   y= 0, 
+                   yend=soma),
+               color= "yellow4")+
+  coord_flip()+
+  labs(x = "Nome eleitoral", y="Número de tweets próprios")
+
+atividade %>% 
+  na.omit(.) %>%
+  group_by(nome_eleitoral) %>%
+  summarise(soma = sum(engaj_total_proprio)) %>% 
+  arrange(-soma) %>% 
+  slice(1:20) %>%
+  ggplot(aes(x = reorder(nome_eleitoral, as.double(soma)), y = soma)) + 
+  geom_col(fill="maroon")+ coord_flip()+ labs(x = "Nome eleitoral", y="Engajamento total próprio")
+```
+
+
+
+
+
+
+#Os estados dos politicos com maior engajamento próprio são os estados com a maior quantidade de politicos? A quantidade de politicos por estado influencia essa medida?
+Seis dos estados com um engajamento proprio alto são: SP, RJ, PR, RS, DF e MG. Já os estados com maior quantidade de politicos em ordem decrescente são: SP, MG, RJ, RS, PR e BA. Conseguimos observar que os estados foram comuns em sua maioria, divergindo apenas pelo estado da Bahia, que não aparece entre os primeiros 6 com maior engajamento. Isso nos mostra que a quantidade de políticos no estado influencia o nivel de engajamento, mas não determina com precisão a posição do estado no ranking.    
+
+```{r}
+atividade %>% 
+  na.omit(.) %>%
+  group_by(UF) %>%
+  summarise(soma = n()) %>% 
+  arrange(-soma) %>% 
+  slice(1:20) %>%
+  ggplot(aes(x = reorder(UF, as.double(soma)), 
+             y = soma)) +
+  geom_point(size=3.3, 
+             color = "seagreen1",
+             alpha= 0.9)+
+  geom_segment(aes(x =UF,
+                   xend= UF,
+                   y= 0, 
+                   yend= soma), 
+                   color= "seagreen")+ 
+  coord_flip()+ 
+  labs(x = "Estado", y="Número de políticos no twitter")
+
+atividade %>% 
+  na.omit(.) %>%
+  group_by(UF) %>%
+  summarise(soma = sum(engaj_total_proprio)) %>% 
+  arrange(-soma) %>% 
+  slice(1:20) %>%
+  ggplot(aes(x = reorder(UF, 
+                         as.double(soma)),
+             y = soma, fill = UF)) + 
+  geom_col()+
+  coord_flip()+ 
+  labs(x = "Estado", y="Engajamento total próprio")
+
+```
+
+
+
+
+
+
+
